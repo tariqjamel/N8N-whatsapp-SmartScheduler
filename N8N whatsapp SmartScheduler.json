@@ -1,0 +1,260 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        288,
+        -112
+      ],
+      "id": "4d12cf75-09b6-44a9-980b-a9eedc1e10cf",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines?country=us&apiKey=69829d8297b345bcb714db91b3018a2a",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        -304
+      ],
+      "id": "0b3196e5-056e-4f11-9c1c-5c794b6e4fa4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "url": "  https://api.openweathermap.org/data/2.5/weather?q=islamabad&appid=a9e05405673422b35b8f9c7f0f6b3355&units=metric",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        608,
+        -96
+      ],
+      "id": "7e4730df-06fc-4dd8-a6c6-36c7e0a5aa08",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "tariqemran98@gmail.com",
+          "mode": "list",
+          "cachedResultName": "tariqemran98@gmail.com"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.startOf('day') }}",
+        "timeMax": "={{ $now.endOf('day') }}",
+        "options": {
+          "orderBy": "startTime"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        112
+      ],
+      "id": "c176b27d-f21d-4e1f-8d0c-afede45e30ba",
+      "name": "Get many events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "afnYMBeqQWsIbPaY",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\"🌤 Weather in Islamabad: \" + \n  $node[\"HTTP Request1\"].json.weather[0].description + \n  \", \" + $node[\"HTTP Request1\"].json.main.temp + \"°C\\n\\n\" +\n\n  \"📰 News:\\n\" + \n  $node[\"HTTP Request\"].json.articles.map(a => \"- \" + a.title + \" (\" + a.source.name + \")\").slice(0,3).join(\"\\n\") + \"\\n\\n\" +\n\n  \"📅 Events:\\n\" +\n  (\n    $node[\"Get many events\"].json.length > 0\n      ? $node[\"Get many events\"].json.map(e => \"- \" + e.summary + \" (\" + e.start.dateTime + \")\").join(\"\\n\")\n      : \"No events today ✅\"\n  )\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -112
+      ],
+      "id": "aea8a18e-e950-4460-8ae1-81cc7f45b9cb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        96
+      ],
+      "id": "0a7d0e9c-5ff5-4167-9b29-25b8874ce8a2",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "PuH5EkQC3O67HCXy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "775548272308085",
+        "recipientPhoneNumber": "+923336979583",
+        "textBody": "={{$json.output}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        -112
+      ],
+      "id": "fd9616ef-f7d6-4d78-82b2-9ce12ddf90ca",
+      "name": "Send message",
+      "webhookId": "0814e64c-9c18-4ece-98b9-70bdbb134fab",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "EgEvwNLXnWXxZw4N",
+          "name": "WhatsApp account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        880,
+        -112
+      ],
+      "id": "66108713-5b6a-423f-9293-90b17610d43f",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9eccd790-a474-4b1d-92f3-bc4a3b9029c0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4bae4741cf745fe59a8302657ece1ac2b3b8f323bddd43a456e2b9ffefd3fd4f"
+  },
+  "id": "0aJkfpwKJ46hMh1h",
+  "tags": []
+}
